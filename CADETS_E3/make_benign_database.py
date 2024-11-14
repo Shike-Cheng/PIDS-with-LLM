@@ -8,7 +8,7 @@ from config import *
 train_kname = artifact_path + "day_2_4"
 trainFilePath = artifact_path + "day_2_4.csv"
 
-id_map_path = artifact_path + "tc_e3_cadet_dataset_db_map.json"
+id_map_path = artifact_path + database + '_map' + '.json'
 
 
 def read(path):
