@@ -1,6 +1,6 @@
 
-# sudo systemctl start postgresql 启动数据库
-# sudo -u postgres psql 进入
+# sudo systemctl start postgresql
+# sudo -u postgres psql
 
 ########################################################
 #
@@ -33,7 +33,7 @@ port = '5432'
 ########################################################
 
 # The directory of the raw logs
-raw_dir = "/home/star/dataset/darpa/darpa3/theia/"
+raw_dir = ""
 
 artifact_path = "./artifact/"
 ########################################################
