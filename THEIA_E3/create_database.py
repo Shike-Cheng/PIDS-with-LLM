@@ -63,7 +63,7 @@ def store_netflow(file_path, cur, connect):
     # Store data into database
     datalist = []
     for i in netobj2hash.keys():
-        datalist.append([i] + netobj2hash[i][0].split(","))  # 节点 UUID、节点属性的哈希值以及节点属性的拆分值, 蛮奇怪，为啥前面不直接构建datalist?
+        datalist.append([i] + netobj2hash[i][0].split(","))
 
     sql = '''insert into netflow_node_table
                          values %s
@@ -172,8 +172,7 @@ def create_node_list(cur, connect):
     for i in records:
         netflow_uuidList.append(i[0])
 
-    # # #! 重复插入，测试时需要注释
-    node_list_database = [] # 所有类型node合而为一，用递增的index表示
+    node_list_database = []
     node_index = 0
     for i in node_list:
         node_list_database.append([i] + node_list[i] + [node_index])
@@ -239,26 +238,20 @@ def store_event(file_path, cur, connect, reverse, nodeid2msg, subject_uuid2hash,
 
 
 if __name__ == "__main__":
-    # 先处理所有类型的节点，然后汇总分配index，然后再处理事件
     cur, connect = init_database_connection()
 
-    # There will be 155322 netflow nodes stored in the table
     print("Processing netflow data")
     store_netflow(file_path=raw_dir, cur=cur, connect=connect)
 
-    # There will be 224146 subject nodes stored in the table
     print("Processing subject data")
     store_subject(file_path=raw_dir, cur=cur, connect=connect)
 
-    # There will be 234245 file nodes stored in the table
     print("Processing file data")
     store_file(file_path=raw_dir, cur=cur, connect=connect)
 
-    # There will be 613713 entities stored in the table
     print("Extracting the node list")
     nodeid2msg, subject_uuidList, file_uuidList, netflow_uuidList = create_node_list(cur=cur, connect=connect)
 
-    # There will be 31573565 events stored in the table
     print("Processing the events")
     store_event(
         file_path=raw_dir,
