@@ -12,7 +12,7 @@ trainFilePath = artifact_path + "day_8_9.csv"
 testFilePath = artifact_path + "day_15_15.csv"
 kname = artifact_path + "day_15_15"
 
-id_map_path = artifact_path + "tc_e3_cadet_dataset_db_map.json"
+id_map_path = artifact_path + database + '_map' + '.json'
 
 
 def read(path):
