@@ -416,7 +416,7 @@ def forword_find_k1(adj, node, depth):
 
             if state not in visited:
                 if current_time == 0 or next_time >= current_time:
-                    visited.add(state)  # 记录当前状态
+                    visited.add(state) 
                     new_path = path + [neighbor]
                     new_time = time + [next_time]
                     new_event = event + [event_type]
