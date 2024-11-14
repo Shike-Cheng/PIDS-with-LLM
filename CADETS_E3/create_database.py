@@ -226,26 +226,22 @@ def store_event(file_path, cur, connect, reverse, nodeid2msg, subject_uuid2hash,
 
 
 if __name__ == "__main__":
-    # 先处理所有类型的节点，然后汇总分配index，然后再处理事件
+
     cur, connect = init_database_connection()
 
-    # There will be 155322 netflow nodes stored in the table
     print("Processing netflow data")
     store_netflow(file_path=raw_dir, cur=cur, connect=connect)
 
-    # There will be 224146 subject nodes stored in the table
+
     print("Processing subject data")
     store_subject(file_path=raw_dir, cur=cur, connect=connect)
 
-    # There will be 234245 file nodes stored in the table
     print("Processing file data")
     store_file(file_path=raw_dir, cur=cur, connect=connect)
 
-    # There will be 613713 entities stored in the table
     print("Extracting the node list")
     nodeid2msg, subject_uuidList, file_uuidList, netflow_uuidList = create_node_list(cur=cur, connect=connect)
 
-    # There will be 31573565 events stored in the table
     print("Processing the events")
     store_event(
         file_path=raw_dir,
