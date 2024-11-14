@@ -589,23 +589,18 @@ def store_event(file_path, cur, connect, reverse, nodeid2msg, subject_uuidList, 
 if __name__ == "__main__":
     cur, connect = init_database_connection()
 
-    # 219384   133782
     print("Processing netflow data")
     store_netflow(file_path=raw_dir, cur=cur, connect=connect)
 
-    # 6576457   4067985
     print("Processing subject data")
     store_subject(file_path=raw_dir, cur=cur, connect=connect)
-
-    # 6097737  3941068
+ 
     print("Processing file data")
     store_file(file_path=raw_dir, cur=cur, connect=connect)
 
-    # 12893578
     print("Extracting the node list")
     nodeid2msg, subject_uuidList, file_uuidList, net_uuidList = create_node_list(cur=cur, connect=connect)
 
-    # 1003492271
     print("Processing the events")
     store_event(
         file_path=raw_dir,
