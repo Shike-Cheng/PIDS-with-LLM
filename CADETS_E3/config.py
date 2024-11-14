@@ -33,7 +33,7 @@ port = '5432'
 ########################################################
 
 # The directory of the raw logs
-raw_dir = "/home/star/dataset/darpa/darpa3/cadets/"
+raw_dir = ""
 
 artifact_path = "./artifact/"
 ########################################################
