@@ -5,8 +5,8 @@ import json
 import ast
 from config import *
 
-train_kname = artifact_path + "day_3_5"
-trainFilePath = artifact_path + "day_3_5.csv"
+train_kname = artifact_path + "day_8_9"
+trainFilePath = artifact_path + "day_8_9.csv"
 
 id_map_path = artifact_path + database + '_map' + '.json'
 
