@@ -240,9 +240,9 @@ def createAdjListCleanly(parsedList, setOfsets, freqDict, max_freq, id_map, mode
         row = parsedList[i]
 
         src, dest = (row[0], row[1], 0), (row[2], row[3], 0)
-        if row[1] != 'subject':  # (F/S, P)
+        if row[1] != 'subject':
             dest = (row[2], row[6], row[3], 0)
-        elif row[3] != 'subject':  # (P, F/S)
+        elif row[3] != 'subject':
             src = (row[0], row[6], row[1], 0)
         else:
             src = (row[0], row[6], row[1], 0)
@@ -327,8 +327,6 @@ def makeAdjListDAGFaster(adjListForward):
     dagForAdj = {}
     dagDestAdj = {}
     for src in adjListForward:
-        if src == ('307648', 1, 'subject', 0):
-            aa = 0
         for edge in adjListForward[src]:
             forwardEdges.append((edge[0], src, edge[1], edge[2], edge[3]))  # (retTime, src, dst, reltype, score)
     forwardEdges = sorted(forwardEdges)
@@ -416,7 +414,7 @@ def forword_find_k1(adj, node, depth):
 
             if state not in visited:
                 if current_time == 0 or next_time >= current_time:
-                    visited.add(state)  # 记录当前状态
+                    visited.add(state)
                     new_path = path + [neighbor]
                     new_time = time + [next_time]
                     new_event = event + [event_type]
