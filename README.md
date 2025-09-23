@@ -10,6 +10,7 @@
 
 Download the DARPA TC dataset from: https://drive.google.com/drive/folders/1fOCY3ERsEmXmvDekG-LUUSjfWs6TRdp-
 
+Environment Settings: https://github.com/ubc-provenance/kairos/blob/main/DARPA/settings/environment-settings.md
 Setting Database: database.md
 
 #### Create Database
@@ -60,5 +61,6 @@ python openai_test.py
 ```sh
 python reconstruct_attack_graph.py
 ```
+
 
 
