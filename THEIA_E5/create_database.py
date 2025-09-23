@@ -162,24 +162,23 @@ def store_netflow(file_path, cur, connect):
                         dstport = res[5]
 
                         nodeproperty = srcaddr + "," + srcport + "," + dstaddr + "," + dstport
-                        hashstr = stringtomd5(nodeproperty)
-                        netobj2hash[nodeid] = [hashstr, nodeproperty]
-                        netobj2hash[hashstr] = nodeid
-                        netobjset.add(hashstr)
+                        netobj2hash[nodeid] = [nodeproperty]
                     except:
                         pass
 
     # Store data into database
     datalist = []
     for i in netobj2hash.keys():
-        if len(i) != 64:
-            datalist.append([i] + [netobj2hash[i][0]] + netobj2hash[i][1].split(","))
+        datalist.append([i] + netobj2hash[i][0].split(","))
 
     sql = '''insert into netflow_node_table
-                         values %s
+                        values %s
             '''
+
     ex.execute_values(cur, sql, datalist, page_size=10000)
     connect.commit()
+    del netobj2hash
+    del datalist
 
 def store_subject(file_path, cur, connect):
     # Parse data from logs
@@ -204,11 +203,10 @@ def store_subject(file_path, cur, connect):
     # Store into database
     datalist = []
     for i in subject_obj2hash.keys():
-        if len(i) != 64:
-            datalist.append([i] + [stringtomd5(subject_obj2hash[i]), subject_obj2hash[i]])
+        datalist.append([i] + [subject_obj2hash[i]])
     sql = '''insert into subject_node_table
-                         values %s
-            '''
+                             values %s
+                '''
     ex.execute_values(cur, sql, datalist, page_size=10000)
     connect.commit()
 
@@ -228,14 +226,14 @@ def store_file(file_path, cur, connect):
                     except:
                         fail_count += 1
 
-    datalist = []
+    datalist=[]
     for i in file_obj2hash.keys():
-        if len(i) != 64:
-            datalist.append([i] + [stringtomd5(file_obj2hash[i]), file_obj2hash[i]])
+        datalist.append([i]+[file_obj2hash[i][0]])
+
     sql = '''insert into file_node_table
                          values %s
             '''
-    ex.execute_values(cur, sql, datalist, page_size=10000)
+    ex.execute_values(cur,sql, datalist,page_size=10000)
     connect.commit()
 
 def create_node_list(cur, connect):
@@ -249,10 +247,10 @@ def create_node_list(cur, connect):
     records = cur.fetchall()
 
     for i in records:
-        node_list[i[1]] = ["file", i[-1]]
-    file_uuid2hash = {}
+        node_list[i[0]] = ["file", i[-1]]
+    file_uuidList = []
     for i in records:
-        file_uuid2hash[i[0]] = i[1]
+        file_uuidList.append(i[0])
 
     # subject
     sql = """
@@ -261,10 +259,10 @@ def create_node_list(cur, connect):
     cur.execute(sql)
     records = cur.fetchall()
     for i in records:
-        node_list[i[1]] = ["subject", i[-1]]
-    subject_uuid2hash = {}
+        node_list[i[0]] = ["subject", i[-1]]
+    subject_uuidList = []
     for i in records:
-        subject_uuid2hash[i[0]] = i[1]
+        subject_uuidList.append(i[0])
 
     # netflow
     sql = """
@@ -273,11 +271,11 @@ def create_node_list(cur, connect):
     cur.execute(sql)
     records = cur.fetchall()
     for i in records:
-        node_list[i[1]] = ["netflow", i[-2] + ":" + i[-1]]
+        node_list[i[0]] = ["netflow", i[-4] + ":" + i[-3] + "->" + i[-2] + ":" + i[-1]]
 
-    net_uuid2hash = {}
+    net_uuidList = []
     for i in records:
-        net_uuid2hash[i[0]] = i[1]
+        net_uuidList.append(i[0])
 
     node_list_database = []
     node_index = 0
@@ -297,71 +295,69 @@ def create_node_list(cur, connect):
     nodeid2msg = {}
     for i in rows:
         nodeid2msg[i[0]] = i[-1]
-        nodeid2msg[i[-1]] = {i[1]: i[2]}
 
-    return nodeid2msg, subject_uuid2hash, file_uuid2hash, net_uuid2hash
+    return nodeid2msg, subject_uuidList, file_uuidList, net_uuidList
 
-def store_event(file_path, cur, connect, reverse, nodeid2msg, subject_uuid2hash, file_uuid2hash, net_uuid2hash):
-    datalist = []
-    edge_type = set()
+def store_event(file_path, cur, connect, reverse, nodeid2msg, subject_uuidList, file_uuidList, net_uuidList):
+    valid_subjects = set(subject_uuidList)
+    valid_allnodes = set(subject_uuidList + file_uuidList + net_uuidList)
+
+    subject_uuid_pattern = re.compile('"subject":{"com.bbn.tc.schema.avro.cdm20.UUID":"(.*?)"}')
+    predicateObject_uuid_pattern = re.compile('"predicateObject":{"com.bbn.tc.schema.avro.cdm20.UUID":"(.*?)"}')
+    type_pattern = re.compile('"type":"(.*?)"')
+    timestamp_pattern = re.compile('"timestampNanos":(.*?),')
+
+    datalist=[]
+    edge_type=set()
+    total_event_count=0
     for file in tqdm(filelist):
         with open(file_path + file, "r") as f:
             for line in (f):
                 if '{"datum":{"com.bbn.tc.schema.avro.cdm20.Event"' in line:
-                    #                     print(line)
-                    subject_uuid = re.findall('"subject":{"com.bbn.tc.schema.avro.cdm20.UUID":"(.*?)"', line)
-                    predicateObject_uuid = re.findall('"predicateObject":{"com.bbn.tc.schema.avro.cdm20.UUID":"(.*?)"',
-                                                      line)
-                    if len(subject_uuid) > 0 and len(predicateObject_uuid) > 0:
-                        if subject_uuid[0] in subject_uuid2hash \
-                                and (
-                                predicateObject_uuid[0] in file_uuid2hash or predicateObject_uuid[0] in net_uuid2hash):
-                            relation_type = re.findall('"type":"(.*?)"', line)[0]
-                            time_rec = re.findall('"timestampNanos":(.*?),', line)[0]
-                            time_rec = int(time_rec)
-                            subjectId = subject_uuid2hash[subject_uuid[0]]
-                            if predicateObject_uuid[0] in file_uuid2hash:
-                                objectId = file_uuid2hash[predicateObject_uuid[0]]
-                            else:
-                                objectId = net_uuid2hash[predicateObject_uuid[0]]
-                            #                                 print(line)
-                            edge_type.add(relation_type)
-                            if relation_type in reverse:
-                                datalist.append(
-                                    [objectId, nodeid2msg[objectId], relation_type, subjectId, nodeid2msg[subjectId],
-                                     time_rec])
-                            else:
-                                datalist.append(
-                                    [subjectId, nodeid2msg[subjectId], relation_type, objectId, nodeid2msg[objectId],
-                                     time_rec])
+                    total_event_count+=1
+#                     print(line)
+                    relation_type_match = type_pattern.search(line)
+                    if relation_type_match:
+                        relation_type = relation_type_match.group(1)
+                        subject_uuid_match = subject_uuid_pattern.search(line)
+                        predicateObject_uuid_match = predicateObject_uuid_pattern.search(line)
+                        if subject_uuid_match and predicateObject_uuid_match:
+                            subject_uuid = subject_uuid_match.group(1)
+                            predicateObject_uuid = predicateObject_uuid_match.group(1)
+                            if subject_uuid in valid_subjects and predicateObject_uuid in valid_allnodes:
+                                time_rec_match = timestamp_pattern.search(line)
+                                if time_rec_match:
+                                    time_rec = int(time_rec_match.group(1))
+                                    subjectId = subject_uuid
+                                    objectId = predicateObject_uuid
+                                    if relation_type in reverse:
+                                        datalist.append([objectId,nodeid2msg[objectId],relation_type,subjectId,nodeid2msg[subjectId],time_rec])
+                                    else:
+                                        datalist.append([subjectId,nodeid2msg[subjectId],relation_type,objectId,nodeid2msg[objectId],time_rec])
+        sql = '''insert into event_table
+                                 values %s
+                    '''
+        ex.execute_values(cur, sql, datalist, page_size=10000)
+        datalist.clear()
 
-    sql = '''insert into hash2uuid
-                         values %s
-            '''
-    ex.execute_values(cur, sql, datalist, page_size=10000)
     connect.commit()
-
+    print("total_event_count:",total_event_count)
 
 if __name__ == "__main__":
     cur, connect = init_database_connection()
 
-    # There will be 155322 netflow nodes stored in the table
-    # print("Processing netflow data")
-    # store_netflow(file_path=raw_dir, cur=cur, connect=connect)
-    #
-    # # There will be 224146 subject nodes stored in the table
-    # print("Processing subject data")
-    # store_subject(file_path=raw_dir, cur=cur, connect=connect)
-    #
-    # # There will be 234245 file nodes stored in the table
-    # print("Processing file data")
-    # store_file(file_path=raw_dir, cur=cur, connect=connect)
+    print("Processing netflow data")
+    store_netflow(file_path=raw_dir, cur=cur, connect=connect)
 
-    # There will be 268242 entities stored in the table
+    print("Processing subject data")
+    store_subject(file_path=raw_dir, cur=cur, connect=connect)
+
+    print("Processing file data")
+    store_file(file_path=raw_dir, cur=cur, connect=connect)
+
     print("Extracting the node list")
-    nodeid2msg, subject_uuid2hash, file_uuid2hash, net_uuid2hash = create_node_list(cur=cur, connect=connect)
+    nodeid2msg, subject_uuidList, file_uuidList, net_uuidList = create_node_list(cur=cur, connect=connect)
 
-    # There will be 29727441 events stored in the table
     print("Processing the events")
     store_event(
         file_path=raw_dir,
@@ -369,7 +365,7 @@ if __name__ == "__main__":
         connect=connect,
         reverse=edge_reversed,
         nodeid2msg=nodeid2msg,
-        subject_uuid2hash=subject_uuid2hash,
-        file_uuid2hash=file_uuid2hash,
-        net_uuid2hash=net_uuid2hash
+        subject_uuidList=subject_uuidList,
+        file_uuidList=file_uuidList,
+        net_uuidList=net_uuidList
     )
