@@ -44,7 +44,6 @@ tc_cadet_dataset_db=# create unique index event_table__id_uindex on event_table 
 tc_cadet_dataset_db=# create table file_node_table
 (
     node_uuid varchar not null,
-    hash_id   varchar not null,
     path      varchar,
     constraint file_node_table_pk
         primary key (node_uuid, hash_id)
@@ -55,7 +54,6 @@ tc_cadet_dataset_db=# alter table file_node_table owner to postgres;
 tc_cadet_dataset_db=# create table netflow_node_table
 (
     node_uuid varchar not null,
-    hash_id   varchar not null,
     src_addr  varchar,
     src_port  varchar,
     dst_addr  varchar,
@@ -69,7 +67,6 @@ tc_cadet_dataset_db=# alter table netflow_node_table owner to postgres;
 tc_cadet_dataset_db=# create table subject_node_table
 (
     node_uuid varchar,
-    hash_id   varchar,
     exec      varchar
 );
 tc_cadet_dataset_db=# alter table subject_node_table owner to postgres;
@@ -77,15 +74,12 @@ tc_cadet_dataset_db=# alter table subject_node_table owner to postgres;
 # create the node2id table
 tc_cadet_dataset_db=# create table node2id
 (
-    hash_id   varchar not null
-        constraint node2id_pk
-            primary key,
+    node_uuid   varchar,
     node_type varchar,
     msg       varchar,
     index_id  bigint
 );
 tc_cadet_dataset_db=# alter table node2id owner to postgres;
-tc_cadet_dataset_db=# create unique index node2id_hash_id_uindex on node2id (hash_id);
 ```
 
 
