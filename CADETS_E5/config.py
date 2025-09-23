@@ -9,7 +9,7 @@
 ########################################################
 
 # Database name
-database = 'tc_e5_cadets_dataset_db_new'
+database = 'tc_e5_cadets_dataset_db'
 
 # Only config this setting when you have the problem mentioned
 # in the Troubleshooting section in settings/environment-settings.md.
