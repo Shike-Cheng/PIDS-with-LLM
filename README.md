@@ -10,11 +10,15 @@
 
 Download the DARPA TC dataset from: https://drive.google.com/drive/folders/1fOCY3ERsEmXmvDekG-LUUSjfWs6TRdp-
 
-Setting Database: kairos database.md
+Setting Database: database.md
 
-[database.md]: https://github.com/ProvenanceAnalytics/kairos/blob/main/DARPA/settings/database.md
+#### Create Database
 
-Selecting Day
+```sh
+python create_database.py
+```
+
+#### Graph Reduction
 
 ```sh
 python getdata_from_database.py
@@ -43,7 +47,6 @@ python main.py
 
 ```sh
 python select_path.py
-python create_database.py
 ```
 
 ####  Anomaly Detection with LLM
@@ -57,4 +60,5 @@ python openai_test.py
 ```sh
 python reconstruct_attack_graph.py
 ```
+
 
