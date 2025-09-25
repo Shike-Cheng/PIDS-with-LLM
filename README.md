@@ -49,6 +49,7 @@ python main.py
 
 ```sh
 python select_path.py
+python dataset_to_database.py
 ```
 
 ####  Anomaly Detection with LLM
@@ -62,6 +63,7 @@ python openai_test.py
 ```sh
 python reconstruct_attack_graph.py
 ```
+
 
 
 
